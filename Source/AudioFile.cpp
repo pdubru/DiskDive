@@ -5,7 +5,7 @@
 
 #include "Mp3File.h"
 
-namespace tagger {
+namespace diskdive {
 
 std::unique_ptr<AudioFile> openAudioFile(const std::filesystem::path& path) {
     std::string ext = path.extension().string();
@@ -19,4 +19,4 @@ std::unique_ptr<AudioFile> openAudioFile(const std::filesystem::path& path) {
     throw TagError("Unsupported file type: " + path.string());
 }
 
-}  // namespace tagger
+}  // namespace diskdive

@@ -6,7 +6,7 @@
 
 #include "AudioFile.h"
 
-using namespace tagger;
+using namespace diskdive;
 
 static void show(const AudioFile& f) {
     const auto p = f.audioProperties();

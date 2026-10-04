@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.20)
-project(tagger LANGUAGES CXX)
+project(DiskDive LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -18,19 +18,19 @@ else()
 endif()
 
 # Core library: no UI includes, TagLib is a PRIVATE dependency (never leaks into headers)
-add_library(tagger_core
+add_library(diskdive_core
   core/AudioFile.cpp
   core/Mp3File.cpp)
-target_include_directories(tagger_core PUBLIC core)
-target_link_libraries(tagger_core PRIVATE ${TAGLIB_TARGET})
+target_include_directories(diskdive_core PUBLIC core)
+target_link_libraries(diskdive_core PRIVATE ${TAGLIB_TARGET})
 if(MSVC)
-  target_compile_options(tagger_core PRIVATE /W4 /utf-8)
+  target_compile_options(diskdive_core PRIVATE /W4 /utf-8)
 else()
-  target_compile_options(tagger_core PRIVATE -Wall -Wextra -Wpedantic)
+  target_compile_options(diskdive_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
 # Step-1/2 console tool
 add_executable(tagcli cli/main.cpp)
-target_link_libraries(tagcli PRIVATE tagger_core)
+target_link_libraries(tagcli PRIVATE diskdive_core)
 
 # Later: add_subdirectory(ui) for Qt, add_subdirectory(tests) for unit tests

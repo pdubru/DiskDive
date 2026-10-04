@@ -7,7 +7,7 @@
 #include <string>
 #include <vector>
 
-namespace tagger {
+namespace diskdive {
 
 struct TagError : std::runtime_error {
     using std::runtime_error::runtime_error;
@@ -59,4 +59,4 @@ public:
 // Throws TagError if the file can't be opened or the format is unsupported.
 std::unique_ptr<AudioFile> openAudioFile(const std::filesystem::path& path);
 
-}  // namespace tagger
+}  // namespace diskdive
