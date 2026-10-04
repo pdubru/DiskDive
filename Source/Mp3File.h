@@ -4,7 +4,7 @@
 
 #include "AudioFile.h"
 
-namespace tagger {
+namespace diskdive {
 
 class Mp3File final : public AudioFile {
 public:
@@ -14,8 +14,8 @@ public:
     std::string formatName() const override;
     AudioProperties audioProperties() const override;
     FieldMap fields() const override;
-    void setField(const std::string& field, std::vector<std::string> values) override;
-    void removeField(const std::string& field) override;
+    void setField(const std::string& key, std::vector<std::string> values) override;
+    void removeField(const std::string& key) override;
     std::vector<FrameInfo> rawFrames() const override;
     void save(const SaveOptions& options) override;
 
@@ -24,4 +24,4 @@ private:
     std::unique_ptr<Impl> impl_;
 };
 
-}  // namespace tagger
+}  // namespace diskdive

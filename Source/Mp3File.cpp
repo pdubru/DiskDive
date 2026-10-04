@@ -12,7 +12,7 @@
 
 namespace fs = std::filesystem;
 
-namespace tagger {
+namespace diskdive {
 
 namespace {
 
@@ -72,22 +72,22 @@ FieldMap Mp3File::fields() const {
     return out;
 }
 
-void Mp3File::setField(const std::string& field, std::vector<std::string> values) {
-    if (values.empty()) return removeField(field);
+void Mp3File::setField(const std::string& key, std::vector<std::string> values) {
+    if (values.empty()) return removeField(key);
 
     TagLib::PropertyMap props = impl_->file.properties();
     TagLib::StringList list;
     for (const auto& v : values) list.append(toTL(v));
-    props.replace(toTL(upper(field)), list);
+    props.replace(toTL(upper(key)), list);
 
     const TagLib::PropertyMap rejected = impl_->file.setProperties(props);
-    if (rejected.contains(toTL(upper(field))))
-        throw TagError("Field not supported by ID3: " + field);
+    if (rejected.contains(toTL(upper(key))))
+        throw TagError("Field not supported by ID3: " + key);
 }
 
-void Mp3File::removeField(const std::string& field) {
+void Mp3File::removeField(const std::string& key) {
     TagLib::PropertyMap props = impl_->file.properties();
-    props.erase(toTL(upper(field)));
+    props.erase(toTL(upper(key)));
     impl_->file.setProperties(props);
 }
 
@@ -126,4 +126,4 @@ void Mp3File::save(const SaveOptions& opt) {
     }
 }
 
-}  // namespace tagger
+}  // namespace diskdive
