@@ -30,7 +30,7 @@ else()
 endif()
 
 # Step-1/2 console tool
-add_executable(tagcli cli/main.cpp)
-target_link_libraries(tagcli PRIVATE diskdive_core)
+add_executable(diskdive cli/main.cpp)
+target_link_libraries(diskdive PRIVATE diskdive_core)
 
 # Later: add_subdirectory(ui) for Qt, add_subdirectory(tests) for unit tests
