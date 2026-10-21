@@ -18,8 +18,8 @@
 
 ## Steps
 1. [x] Track ID for MP3: `audioRegion()`, `computeTrackId()`, `diskdive id`
-2. [ ] WAV and AIFF support (`audioRegion()` for both)
-3. [ ] First tests (hash vectors, "retag does not change ID")
+2. [x] WAV and AIFF support (`audioRegion()` for both)
+3. [x] First tests: hash vectors, "retag/move does not change ID", per format. See [[Testing]]
 4. [ ] `library/`: SQLite schema (`tracks`, `locations`) and folder scanner
 5. [ ] Tag model and sync states
 6. [ ] CLI commands to inspect all of the above, then UI

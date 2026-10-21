@@ -21,6 +21,20 @@ Arrows mean "depends on". Dependencies only point **down**, never up. That is wh
 TagLib is a *private* dependency of `core`. Public headers (`AudioFile.h`, `TrackId.h`) never mention it. Each format class (e.g. `Mp3File`) uses the **pimpl idiom**: the header declares `struct Impl;` and only the `.cpp` knows what is in it. Benefit: we could replace TagLib one day, and nothing outside `core` would notice.
 
 ## Adding a format
-Subclass `AudioFile`, implement its virtual functions (including `audioRegion()`, see [[Track Identity]]), register the extension in `openAudioFile()` in `core/AudioFile.cpp`.
+Subclass `AudioFile`, implement its virtual functions (including `audioRegion()`, see [[Track Identity]]), register the extension in `openAudioFile()` in `core/AudioFile.cpp`, add the `.cpp` to `CMakeLists.txt`, and add the format to the table in `tests/test_track_id.cpp`.
 
-Status: MP3 done. WAV and AIFF planned.
+Status: MP3, WAV and AIFF done.
+
+## Files in `core/`
+| File | Public? | Role |
+|---|---|---|
+| `AudioFile.h/.cpp` | yes | The interface every format implements + the `openAudioFile()` factory |
+| `Mp3File`, `WavFile`, `AiffFile` (`.h/.cpp`) | yes (header only exposes the class, not TagLib) | One class per format |
+| `TrackId.h/.cpp` | yes | `computeTrackId()` |
+| `Sha256.h/.cpp` | internal | The hash function |
+| `TagLibUtil.h` | internal | Shared TagLib code: string conversion, read/write fields, backup on save |
+| `ChunkScan.h/.cpp` | internal | Finds chunks in RIFF/WAV and IFF/AIFF files |
+
+"Internal" is a convention: those headers are only included from `.cpp` files inside `core/`.
+
+Tests live in `tests/`, see [[Testing]].

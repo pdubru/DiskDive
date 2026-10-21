@@ -1,33 +1,18 @@
 #include "Mp3File.h"
 
-#include <taglib/id3v2frame.h>
 #include <taglib/id3v2header.h>
-#include <taglib/id3v2tag.h>
 #include <taglib/mpegfile.h>
 #include <taglib/mpegheader.h>
 #include <taglib/mpegproperties.h>
 #include <taglib/xingheader.h>
-#include <taglib/tpropertymap.h>
 
 #include <algorithm>
-#include <cctype>
+
+#include "TagLibUtil.h"
 
 namespace fs = std::filesystem;
 
 namespace diskdive {
-
-namespace {
-
-TagLib::String toTL(const std::string& utf8) { return TagLib::String(utf8, TagLib::String::UTF8); }
-std::string fromTL(const TagLib::String& s) { return s.to8Bit(true); }  // true = UTF-8
-
-std::string upper(std::string s) {
-    std::transform(s.begin(), s.end(), s.begin(),
-                   [](unsigned char c) { return static_cast<char>(std::toupper(c)); });
-    return s;
-}
-
-}  // namespace
 
 struct Mp3File::Impl {
     fs::path path;
@@ -90,69 +75,26 @@ AudioRegion Mp3File::audioRegion() const {
     return {static_cast<std::uint64_t>(start), static_cast<std::uint64_t>(end - start)};
 }
 
-FieldMap Mp3File::fields() const {
-    FieldMap out;
-    const TagLib::PropertyMap props = impl_->file.properties();
-    for (const auto& kv : props) {
-        std::vector<std::string> values;
-        for (const auto& v : kv.second) values.push_back(fromTL(v));
-        out[fromTL(kv.first)] = std::move(values);
-    }
-    return out;
-}
+FieldMap Mp3File::fields() const { return detail::readFields(impl_->file); }
 
 void Mp3File::setField(const std::string& key, std::vector<std::string> values) {
     if (values.empty()) return removeField(key);
-
-    TagLib::PropertyMap props = impl_->file.properties();
-    TagLib::StringList list;
-    for (const auto& v : values) list.append(toTL(v));
-    props.replace(toTL(upper(key)), list);
-
-    const TagLib::PropertyMap rejected = impl_->file.setProperties(props);
-    if (rejected.contains(toTL(upper(key))))
-        throw TagError("Field not supported by ID3: " + key);
+    detail::writeField(impl_->file, key, values);
 }
 
-void Mp3File::removeField(const std::string& key) {
-    TagLib::PropertyMap props = impl_->file.properties();
-    props.erase(toTL(upper(key)));
-    impl_->file.setProperties(props);
-}
+void Mp3File::removeField(const std::string& key) { detail::eraseField(impl_->file, key); }
 
-std::vector<FrameInfo> Mp3File::rawFrames() const {
-    std::vector<FrameInfo> out;
-    if (auto* tag = impl_->file.ID3v2Tag(false)) {
-        for (auto* frame : tag->frameList()) {
-            const auto id = frame->frameID();
-            out.push_back({std::string(id.data(), id.size()), fromTL(frame->toString())});
-        }
-    }
-    return out;
-}
+std::vector<FrameInfo> Mp3File::rawFrames() const { return detail::listFrames(impl_->file.ID3v2Tag(false)); }
 
 void Mp3File::save(const SaveOptions& opt) {
-    // Safety net: tag writes may rewrite the whole file, so keep a copy until we know it worked.
-    fs::path backup = impl_->path;
-    backup += ".bak";
-    try {
-        fs::copy_file(impl_->path, backup, fs::copy_options::overwrite_existing);
-    } catch (const fs::filesystem_error& e) {
-        throw TagError(std::string("Could not create backup: ") + e.what());
-    }
-
-    const auto version = (opt.id3Version == Id3Version::V23) ? TagLib::ID3v2::v3 : TagLib::ID3v2::v4;
+    const fs::path backup = detail::makeBackup(impl_->path);
 
     // Writes ID3v2 only, leaves any existing ID3v1 tag untouched, no auto-duplication.
     const bool ok = impl_->file.save(TagLib::MPEG::File::ID3v2, TagLib::File::StripNone,
-                                     version, TagLib::File::DoNotDuplicate);
-    if (!ok)
-        throw TagError("Save failed. Original preserved at: " + backup.string());
+                                     detail::toTL(opt.id3Version), TagLib::File::DoNotDuplicate);
+    if (!ok) throw TagError("Save failed. Original preserved at: " + backup.string());
 
-    if (!opt.keepBackup) {
-        std::error_code ec;
-        fs::remove(backup, ec);
-    }
+    detail::finishBackup(backup, opt.keepBackup);
 }
 
 }  // namespace diskdive

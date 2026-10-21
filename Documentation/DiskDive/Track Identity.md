@@ -42,8 +42,15 @@ computeTrackId(file)              core/TrackId.cpp
 - **Skip the Xing/Info frame**: VBR files begin with a frame holding a seek table, not sound. Some tools rewrite it, so it is excluded.
 - **End**: start of the last MPEG frame + that frame's length (a frame header says how long its frame is). This excludes ID3v1 and APE tags at the end.
 
-### WAV / AIFF (planned)
-Hash the payload of the `data` chunk (WAV) or the sound data of the `SSND` chunk (AIFF).
+### WAV and AIFF (`WavFile::audioRegion`, `AiffFile::audioRegion`)
+Both formats are a list of **chunks**: `[4-char id][4-byte size][payload][1 pad byte if size is odd]`. WAV stores sizes little-endian, AIFF big-endian. `core/ChunkScan.cpp` walks that list (hopping from chunk header to chunk header, never reading the payloads) until it finds the one we want.
+
+- **WAV**: the audio is the payload of the `data` chunk. Other chunks (`fmt `, `LIST`, `id3 `, ...) are metadata.
+- **AIFF**: the audio is in the `SSND` chunk. Its payload begins with two numbers, `offset` and `blockSize`, and the samples start `8 + offset` bytes into the payload. Honouring `offset` matters: ignoring it would include padding bytes in the hash.
+- **Truncated files**: a header can claim more bytes than the file has (interrupted download, streamed recording). We clamp the length to what really exists.
+- **Tags**: written as an ID3v2 chunk inside the file (`id3 ` in WAV, `ID3 ` in AIFF), which TagLib handles. WAV can also carry `LIST/INFO` tags, which we read but do not rewrite. Not every DJ program reads ID3 in WAV, which is a known limitation of the WAV format.
+
+Class layout: the three format classes share helper code (`core/TagLibUtil.h`) so the tag logic exists only once.
 
 ## What changes the ID, and what doesn't
 | Action | ID changes? |
@@ -67,4 +74,8 @@ Test file `UmbersRmx.mp3` (initially no tags):
 - After `diskdive set` added tags: file grew by 1163 bytes, audio offset moved 0 → 1163, **ID unchanged**.
 - After moving and renaming to another folder: **ID unchanged**.
 
-Try it yourself: `diskdive id <file.mp3>`.
+Try it yourself: `diskdive id <file>`.
+
+These checks are now automated for MP3, WAV and AIFF, see [[Testing]].
+
+> Note: the MP3 checks above used real files. The WAV/AIFF checks use synthetic files built by the tests; they have not yet been tried on real WAV/AIFF exports from DJ software.

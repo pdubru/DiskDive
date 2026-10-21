@@ -21,6 +21,9 @@ endif()
 add_library(diskdive_core
   core/AudioFile.cpp
   core/Mp3File.cpp
+  core/WavFile.cpp
+  core/AiffFile.cpp
+  core/ChunkScan.cpp
   core/Sha256.cpp
   core/TrackId.cpp)
 target_include_directories(diskdive_core PUBLIC core)
@@ -35,4 +38,13 @@ endif()
 add_executable(diskdive cli/main.cpp)
 target_link_libraries(diskdive PRIVATE diskdive_core)
 
-# Later: add_subdirectory(ui) for Qt, add_subdirectory(tests) for unit tests
+# Unit tests: `ctest --test-dir build/<preset>` or run build/<preset>/diskdive_tests[.exe] directly
+enable_testing()
+add_executable(diskdive_tests
+  tests/test_main.cpp
+  tests/test_sha256.cpp
+  tests/test_track_id.cpp)
+target_link_libraries(diskdive_tests PRIVATE diskdive_core)
+add_test(NAME diskdive_tests COMMAND diskdive_tests)
+
+# Later: add_subdirectory(ui) for Qt
