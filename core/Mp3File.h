@@ -13,6 +13,8 @@ public:
 
     std::string formatName() const override;
     AudioProperties audioProperties() const override;
+    const std::filesystem::path& path() const override;
+    AudioRegion audioRegion() const override;
     FieldMap fields() const override;
     void setField(const std::string& key, std::vector<std::string> values) override;
     void removeField(const std::string& key) override;

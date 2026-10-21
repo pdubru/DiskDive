@@ -20,7 +20,9 @@ endif()
 # Core library: no UI includes, TagLib is a PRIVATE dependency (never leaks into headers)
 add_library(diskdive_core
   core/AudioFile.cpp
-  core/Mp3File.cpp)
+  core/Mp3File.cpp
+  core/Sha256.cpp
+  core/TrackId.cpp)
 target_include_directories(diskdive_core PUBLIC core)
 target_link_libraries(diskdive_core PRIVATE ${TAGLIB_TARGET})
 if(MSVC)

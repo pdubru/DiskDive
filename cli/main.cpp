@@ -5,6 +5,7 @@
 #include <string>
 
 #include "AudioFile.h"
+#include "TrackId.h"
 
 using namespace diskdive;
 
@@ -44,7 +45,13 @@ int main(int argc, char** argv) try {
         }
         file->save(opt);
         std::cout << "Saved.\n\n";
+        file.reset();  // release the file first: Windows won't let us open it a second time while it's held open
         show(*openAudioFile(argv[2]));  // re-read from disk to confirm
+    } else if (cmd == "id") {
+        const auto region = file->audioRegion();
+        std::cout << "Audio  : bytes " << region.offset << " .. " << region.offset + region.length
+                  << " (" << region.length << " bytes)\n"
+                  << "TrackId: " << computeTrackId(*file) << "\n";
     } else {
         throw TagError("Unknown command: " + cmd);
     }

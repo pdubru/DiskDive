@@ -4,7 +4,9 @@
 #include <taglib/id3v2header.h>
 #include <taglib/id3v2tag.h>
 #include <taglib/mpegfile.h>
+#include <taglib/mpegheader.h>
 #include <taglib/mpegproperties.h>
+#include <taglib/xingheader.h>
 #include <taglib/tpropertymap.h>
 
 #include <algorithm>
@@ -59,6 +61,33 @@ AudioProperties Mp3File::audioProperties() const {
         out.channels = p->channels();
     }
     return out;
+}
+
+const fs::path& Mp3File::path() const { return impl_->path; }
+
+AudioRegion Mp3File::audioRegion() const {
+    auto& f = impl_->file;
+
+    // Length of the MPEG frame that starts at `offset` (a frame header says how long its frame is).
+    auto frameLengthAt = [&f](TagLib::offset_t offset) -> TagLib::offset_t {
+        if (offset < 0) return 0;
+        const TagLib::MPEG::Header header(&f, offset, false);  // false: don't require a valid next frame
+        return header.isValid() ? header.frameLength() : 0;
+    };
+
+    TagLib::offset_t start = f.firstFrameOffset();
+    const TagLib::offset_t last = f.lastFrameOffset();
+    const TagLib::offset_t lastLen = frameLengthAt(last);
+    if (start < 0 || lastLen == 0) throw TagError("No MPEG audio frames found: " + impl_->path.string());
+
+    // VBR files start with a "Xing"/"Info" frame: a table of contents, not sound. Tools that
+    // rewrite it (e.g. to fix the duration) would change the ID, so we leave it out.
+    if (const auto* p = impl_->file.audioProperties(); p && p->xingHeader() && p->xingHeader()->isValid())
+        start += frameLengthAt(start);
+
+    const TagLib::offset_t end = std::min<TagLib::offset_t>(last + lastLen, f.length());
+    if (end <= start) throw TagError("Empty MPEG audio region: " + impl_->path.string());
+    return {static_cast<std::uint64_t>(start), static_cast<std::uint64_t>(end - start)};
 }
 
 FieldMap Mp3File::fields() const {

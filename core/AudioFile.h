@@ -1,5 +1,6 @@
 #pragma once
 // Public interface of the core. Must NOT include any TagLib or UI header.
+#include <cstdint>
 #include <filesystem>
 #include <map>
 #include <memory>
@@ -31,6 +32,13 @@ struct AudioProperties {
     int channels = 0;
 };
 
+// Byte range of the file that holds the actual audio (no tags, no container metadata).
+// This is what identifies a track, see TrackId.h.
+struct AudioRegion {
+    std::uint64_t offset = 0;
+    std::uint64_t length = 0;
+};
+
 enum class Id3Version { V23 = 3, V24 = 4 };
 
 struct SaveOptions {
@@ -44,6 +52,11 @@ public:
 
     virtual std::string formatName() const = 0;  // "MP3 / ID3v2.4 + ID3v1"
     virtual AudioProperties audioProperties() const = 0;
+
+    virtual const std::filesystem::path& path() const = 0;
+
+    // Where the audio bytes live inside the file. Tag edits never change these bytes.
+    virtual AudioRegion audioRegion() const = 0;
 
     virtual FieldMap fields() const = 0;
     virtual void setField(const std::string& key, std::vector<std::string> values) = 0;
