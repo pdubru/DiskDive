@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## Overview
 
-DiskDive is a C++17 audio-tag editor in early development. Currently there is a core library plus a console tool; a Qt UI (`ui/`) and a SQLite `library/` layer are planned. MP3, WAV and AIFF (ID3 tags) are implemented. Tracks are identified by a SHA-256 of their audio bytes (`core/TrackId.h`). Developer documentation lives in `Documentation/DiskDive/` (an Obsidian vault): update it when architecture changes. The user is interested in learning, so when prompts are made, make clear and didactive explanations of the decisions made.
+DiskDive is a C++17 audio-tag editor in early development. Currently there is a core library, a SQLite `library/` layer (schema + folder scanner) and a console tool; a Qt UI (`ui/`) and the tag/sync model are planned. MP3, WAV and AIFF (ID3 tags) are implemented. Tracks are identified by a SHA-256 of their audio bytes (`core/TrackId.h`). Developer documentation lives in `Documentation/DiskDive/` (an Obsidian vault): update it when architecture changes. The user is interested in learning, so when prompts are made, make clear and didactive explanations of the decisions made.
 
 ## Build
 
@@ -28,13 +28,15 @@ Run the CLI:
 diskdive id <file>                  # audio region + TrackId
 diskdive show <file.mp3>
 diskdive set <file.mp3> KEY=VALUE [KEY=VALUE ...] [--v23]   # empty VALUE removes the field
+diskdive scan <folder> [--db <file>]   # index a folder into the library DB (default: %APPDATA%\DiskDive\library.db)
+diskdive list [--db <file>]            # known track locations, "[missing]" flagged
 ```
-(The usage strings in `cli/main.cpp` still say `tagcli`.)
 
 ## Architecture
 
 - `core/` → static library `diskdive_core`. Public API is `core/AudioFile.h`: an abstract `AudioFile` (format-agnostic `FieldMap` of upper-case keys → vector of UTF-8 values, raw frame listing, audio properties, in-memory edits flushed by `save()`), plus the `openAudioFile(path)` factory that picks an implementation by extension and throws `TagError`.
 - `core/Mp3File.*`, `WavFile.*`, `AiffFile.*` are the implementations (shared TagLib helpers in `TagLibUtil.h`, RIFF/IFF chunk walking in `ChunkScan.*`, both internal to core). Each exposes `audioRegion()`, the byte range of pure audio, which `computeTrackId()` hashes. They use the pimpl idiom so **TagLib stays a PRIVATE dependency and must never appear in public headers** (and no UI headers in core either). New formats should subclass `AudioFile` and be registered in the factory.
+- `library/` → static library `diskdive_library` (depends on `core`, never the reverse; no UI headers). `Database.*` is a thin RAII wrapper over SQLite (**`sqlite3.h` is PRIVATE to `Database.cpp`**, like TagLib), `Library.*` holds the schema (append-only migrations in `kMigrations`, versioned with `PRAGMA user_version`) and the scanner. Paths are stored relative to a library root with `/` separators; missing files are flagged, never deleted. Details in `Documentation/DiskDive/Library and Scanner.md`.
 - `cli/main.cpp` → `diskdive` executable; the thin consumer of the core API (re-opens the file after `set` to verify what was written).
 - CMake finds TagLib via CONFIG (vcpkg/TagLib 2.x) and falls back to pkg-config (distro TagLib 1.x), so code must compile against both.
 

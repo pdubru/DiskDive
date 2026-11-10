@@ -7,6 +7,7 @@ Start here when you want to find your way around the code.
 ## Notes
 - [[Architecture Overview]]: the layers, folders and what depends on what
 - [[Track Identity]]: how a track is recognised (audio hash), why, and where the code is
+- [[Library and Scanner]]: the SQLite layer, schema/migrations, the folder scanner, with a code walkthrough and reading links
 - [[Testing]]: how to run the tests, what they cover, how to add one
 - [[Roadmap and Decisions]]: what is decided, what is open, what comes next
 
@@ -18,7 +19,9 @@ Start here when you want to find your way around the code.
 | Walk the chunks of a WAV/AIFF | `core/ChunkScan.cpp` |
 | Run or add tests | `tests/` ([[Testing]]) |
 | Compute a track's ID | `core/TrackId.cpp` (uses `core/Sha256.cpp`) |
-| Try things from a terminal | `cli/main.cpp` (`diskdive show / set / id`) |
+| Open the DB / run migrations / scan a folder | `library/Library.cpp` ([[Library and Scanner]]) |
+| Wrap SQLite safely (statements, transactions) | `library/Database.h/.cpp` |
+| Try things from a terminal | `cli/main.cpp` (`diskdive show / set / id / scan / list`) |
 
 ## Build and run
 See `CLAUDE.md` in the repo root. In short: `env.bat`, `cmake --preset windows-mingw`, `cmake --build --preset windows-mingw`.

@@ -34,17 +34,38 @@ else()
   target_compile_options(diskdive_core PRIVATE -Wall -Wextra -Wpedantic)
 endif()
 
-# Step-1/2 console tool
+# Library layer: SQLite + folder scanner. Depends on core; core never depends on it. SQLite is PRIVATE.
+find_package(unofficial-sqlite3 CONFIG QUIET)
+if(TARGET unofficial::sqlite3::sqlite3)
+  set(SQLITE_TARGET unofficial::sqlite3::sqlite3)
+else()
+  find_package(SQLite3 REQUIRED)
+  set(SQLITE_TARGET SQLite::SQLite3)
+endif()
+
+add_library(diskdive_library
+  library/Database.cpp
+  library/Library.cpp)
+target_include_directories(diskdive_library PUBLIC library)
+target_link_libraries(diskdive_library PUBLIC diskdive_core PRIVATE ${SQLITE_TARGET})
+if(MSVC)
+  target_compile_options(diskdive_library PRIVATE /W4 /utf-8)
+else()
+  target_compile_options(diskdive_library PRIVATE -Wall -Wextra -Wpedantic)
+endif()
+
+# Console tool
 add_executable(diskdive cli/main.cpp)
-target_link_libraries(diskdive PRIVATE diskdive_core)
+target_link_libraries(diskdive PRIVATE diskdive_core diskdive_library)
 
 # Unit tests: `ctest --test-dir build/<preset>` or run build/<preset>/diskdive_tests[.exe] directly
 enable_testing()
 add_executable(diskdive_tests
   tests/test_main.cpp
   tests/test_sha256.cpp
-  tests/test_track_id.cpp)
-target_link_libraries(diskdive_tests PRIVATE diskdive_core)
+  tests/test_track_id.cpp
+  tests/test_library.cpp)
+target_link_libraries(diskdive_tests PRIVATE diskdive_core diskdive_library)
 add_test(NAME diskdive_tests COMMAND diskdive_tests)
 
 # Later: add_subdirectory(ui) for Qt

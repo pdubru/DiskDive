@@ -4,7 +4,7 @@
 
 ```
 cli/  (diskdive.exe)   ─┐
-ui/   (Qt, planned)    ─┼──▶  library/ (planned: database, scanner, tag model)  ──▶  core/
+ui/   (Qt, planned)    ─┼──▶  library/ (database, scanner; tag model planned)  ──▶  core/
                         └─────────────────────────────────────────────────────────────▲
 ```
 
@@ -13,7 +13,7 @@ Arrows mean "depends on". Dependencies only point **down**, never up. That is wh
 | Folder | Status | Responsibility | Must NOT contain |
 |---|---|---|---|
 | `core/` | exists | Look *inside one audio file*: read/write its tags, find its audio bytes, compute its ID | database code, UI code, TagLib types in public headers |
-| `library/` | planned | The app's own knowledge: SQLite database, scanning folders, app tags, sync state | UI code |
+| `library/` | exists (DB + scanner; tag model planned) | The app's own knowledge: SQLite database, scanning folders, app tags, sync state. See [[Library and Scanner]] | UI code; `sqlite3.h` in public headers |
 | `cli/` | exists | Thin console front-end, used to try things | business logic |
 | `ui/` | planned | Qt interface | business logic |
 
@@ -36,5 +36,13 @@ Status: MP3, WAV and AIFF done.
 | `ChunkScan.h/.cpp` | internal | Finds chunks in RIFF/WAV and IFF/AIFF files |
 
 "Internal" is a convention: those headers are only included from `.cpp` files inside `core/`.
+
+## Files in `library/`
+| File | Public? | Role |
+|---|---|---|
+| `Database.h/.cpp` | yes (no sqlite types exposed) | RAII wrapper: `Database`, `Statement`, `Transaction`, `DbError` |
+| `Library.h/.cpp` | yes | Schema + migrations, `addRoot`, `scan`, `locations`; `defaultDatabasePath()` |
+
+SQLite is a PRIVATE dependency of `diskdive_library`, exactly like TagLib in `core/`.
 
 Tests live in `tests/`, see [[Testing]].

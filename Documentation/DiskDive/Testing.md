@@ -19,6 +19,7 @@ Exit code 0 means everything passed.
 | `tests/TestFiles.h` | Builds tiny valid MP3, WAV and AIFF files from scratch in a temp folder |
 | `tests/test_sha256.cpp` | Checks our SHA-256 against the official NIST test vectors |
 | `tests/test_track_id.cpp` | Audio region and TrackId behaviour, run once per format |
+| `tests/test_library.cpp` | Schema migration and the scanner rules, on `:memory:` databases (see [[Library and Scanner]]) |
 
 ## Key idea: synthetic files
 The tests do not use real songs. `TestFiles.h` writes files byte by byte, so **we know exactly which bytes are the audio** and can assert that `audioRegion()` returns exactly those. With a real song we could only say "looks plausible". It also means the tests run on any machine without sample files.
