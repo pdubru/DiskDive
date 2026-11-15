@@ -9,6 +9,7 @@ Start here when you want to find your way around the code.
 - [[Track Identity]]: how a track is recognised (audio hash), why, and where the code is
 - [[Library and Scanner]]: the SQLite layer, schema/migrations, the folder scanner, with a code walkthrough and reading links
 - [[Testing]]: how to run the tests, what they cover, how to add one
+- [[Tag Model]]: metadata vs tags, slots and frames, sync states, musical key, schema v2 (step 5 design)
 - [[Roadmap and Decisions]]: what is decided, what is open, what comes next
 
 ## Quick code map
